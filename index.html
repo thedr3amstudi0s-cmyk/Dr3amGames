@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Puzzle Challenge</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c28;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.15);
+    --text: #f0f0f8;
+    --muted: #7a7a9a;
+    --accent: #7c5cfc;
+    --accent2: #fc5c7c;
+    --gold: #ffd700;
+    --green: #4ade80;
+    --red: #f87171;
+    --amber: #fb923c;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .bg-grid {
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(124,92,252,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,92,252,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+  }
+  .app { position: relative; z-index: 1; }
+
+  /* NAV */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,15,0.8);
+    backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { font-family: var(--sans); font-size: 1.2rem; font-weight: 800; letter-spacing: -0.02em; }
+  .logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 0.5rem; }
+  .nav-btn {
+    background: none; border: 1px solid var(--border2); color: var(--muted);
+    padding: 0.4rem 1rem; border-radius: 6px; cursor: pointer;
+    font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.05em;
+    transition: all 0.2s;
+  }
+  .nav-btn:hover { color: var(--text); border-color: var(--accent); }
+  .nav-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+  /* SCREENS */
+  .screen { display: none; min-height: calc(100vh - 65px); }
+  .screen.active { display: block; }
+
+  /* ── LANDING ── */
+  #landing { display: none; }
+  #landing.active {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 4rem 2rem; text-align: center;
+  }
+  .hero-tag {
+    font-size: 0.7rem; letter-spacing: 0.2em; color: var(--accent);
+    border: 1px solid rgba(124,92,252,0.4); padding: 0.3rem 1rem;
+    border-radius: 100px; margin-bottom: 2rem; display: inline-block;
+  }
+  .hero-title {
+    font-family: var(--sans); font-size: clamp(2.5rem, 6vw, 5rem);
+    font-weight: 800; line-height: 1.05; margin-bottom: 1.5rem;
+    letter-spacing: -0.03em;
+  }
+  .hero-title em { font-style: normal; color: var(--accent); }
+  .hero-sub { color: var(--muted); font-size: 0.9rem; max-width: 480px; line-height: 1.8; margin-bottom: 3rem; }
+  .puzzle-cards {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1rem; width: 100%; max-width: 700px; margin-bottom: 3rem;
+  }
+  .puzzle-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.5rem 1rem; cursor: pointer;
+    transition: all 0.2s; position: relative; overflow: hidden;
+  }
+  .puzzle-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .puzzle-card.p1::before { background: var(--accent); }
+  .puzzle-card.p2::before { background: var(--accent2); }
+  .puzzle-card.p3::before { background: var(--gold); }
+  .puzzle-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .puzzle-card .pnum { font-size: 0.65rem; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 0.5rem; }
+  .puzzle-card .pname { font-family: var(--sans); font-size: 1rem; font-weight: 700; margin-bottom: 0.3rem; }
+  .puzzle-card .pdiff {
+    font-size: 0.65rem; display: inline-block; padding: 0.2rem 0.6rem;
+    border-radius: 4px; margin-top: 0.5rem;
+  }
+  .diff-easy { background: rgba(74,222,128,0.15); color: var(--green); }
+  .diff-medium { background: rgba(251,146,60,0.15); color: var(--amber); }
+  .diff-hard { background: rgba(248,113,113,0.15); color: var(--red); }
+  .btn-primary {
+    background: var(--accent); color: white; border: none;
+    padding: 0.9rem 2.5rem; border-radius: 8px; cursor: pointer;
+    font-family: var(--mono); font-size: 0.85rem; letter-spacing: 0.05em;
+    transition: all 0.2s; font-weight: 700;
+  }
+  .btn-primary:hover { background: #6a4ae0; transform: translateY(-1px); }
+  .btn-secondary {
+    background: none; color: var(--muted); border: 1px solid var(--border2);
+    padding: 0.9rem 2rem; border-radius: 8px; cursor: pointer;
+    font-family: var(--mono); font-size: 0.85rem; letter-spacing: 0.05em;
+    transition: all 0.2s; margin-left: 1rem;
+  }
+  .btn-secondary:hover { color: var(--text); border-color: var(--accent); }
+  .locked-banner {
+    display: none; background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3);
+    border-radius: 10px; padding: 1.2rem 2rem; max-width: 500px;
+    color: var(--red); text-align: center; font-size: 0.85rem; line-height: 1.7;
+    margin-bottom: 2rem;
+  }
+  .locked-banner.show { display: block; }
+
+  /* ── PUZZLE SCREEN ── */
+  #puzzle-screen { display: none; }
+  #puzzle-screen.active { display: flex; flex-direction: column; align-items: center; padding: 2rem; }
+  .puzzle-header {
+    width: 100%; max-width: 700px;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 2rem;
+  }
+  .puzzle-meta .ptype { font-size: 0.65rem; letter-spacing: 0.15em; color: var(--muted); }
+  .puzzle-meta .ptitle { font-family: var(--sans); font-size: 1.5rem; font-weight: 700; margin-top: 0.2rem; }
+  .timer-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 0.5rem 1rem; text-align: center;
+  }
+  .timer-label { font-size: 0.6rem; letter-spacing: 0.15em; color: var(--muted); display: block; }
+  .timer-val { font-size: 1.4rem; font-weight: 700; color: var(--accent); letter-spacing: 0.05em; }
+
+  /* Puzzle container */
+  .puzzle-container { width: 100%; max-width: 700px; }
+
+  /* WORD SCRAMBLE */
+  .scramble-area { text-align: center; }
+  .scrambled-word {
+    font-family: var(--sans); font-size: clamp(2rem, 6vw, 4rem);
+    font-weight: 800; letter-spacing: 0.2em; color: var(--accent);
+    margin: 2rem 0; padding: 1.5rem; background: var(--surface);
+    border-radius: 12px; border: 1px solid rgba(124,92,252,0.3);
+  }
+  .hint-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1rem 1.5rem; margin: 1rem 0; text-align: left;
+  }
+  .hint-label { font-size: 0.65rem; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 0.3rem; }
+  .hint-text { font-size: 0.9rem; color: var(--text); }
+  .answer-row { display: flex; gap: 0.5rem; margin: 1.5rem 0; }
+  .answer-input {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 0.8rem 1rem; color: var(--text);
+    font-family: var(--mono); font-size: 1rem; outline: none;
+    transition: border-color 0.2s;
+  }
+  .answer-input:focus { border-color: var(--accent); }
+  .answer-input.correct { border-color: var(--green) !important; color: var(--green); }
+  .answer-input.wrong { border-color: var(--red) !important; animation: shake 0.3s; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}
+  }
+  .submit-btn {
+    background: var(--accent); color: white; border: none;
+    padding: 0.8rem 1.5rem; border-radius: 8px; cursor: pointer;
+    font-family: var(--mono); font-size: 0.85rem; font-weight: 700;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .submit-btn:hover { background: #6a4ae0; }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* CIPHER */
+  .cipher-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 0.5rem; margin: 1.5rem 0;
+  }
+  .cipher-cell {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 0.7rem 0.5rem; text-align: center;
+  }
+  .cipher-encoded { font-size: 1.2rem; font-weight: 700; color: var(--accent2); }
+  .cipher-decoded { font-size: 0.8rem; color: var(--muted); margin-top: 0.3rem; min-height: 1.2em; }
+  .cipher-key-row {
+    display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0;
+  }
+  .key-hint {
+    background: rgba(252,92,124,0.1); border: 1px solid rgba(252,92,124,0.3);
+    border-radius: 6px; padding: 0.3rem 0.6rem; font-size: 0.75rem;
+  }
+  .key-hint em { color: var(--accent2); font-style: normal; }
+
+  /* MATH LOGIC */
+  .equation-list { display: flex; flex-direction: column; gap: 0.8rem; margin: 1.5rem 0; }
+  .equation-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1rem 1.5rem;
+    display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  }
+  .eq-text { font-size: 1.1rem; font-weight: 700; flex: 1; min-width: 200px; }
+  .eq-text .var { color: var(--gold); }
+  .eq-input {
+    width: 80px; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 6px; padding: 0.5rem 0.75rem; color: var(--text);
+    font-family: var(--mono); font-size: 1rem; text-align: center; outline: none;
+    transition: border-color 0.2s;
+  }
+  .eq-input:focus { border-color: var(--gold); }
+  .eq-input.correct { border-color: var(--green); color: var(--green); }
+  .eq-input.wrong { border-color: var(--red); animation: shake 0.3s; }
+  .eq-check { font-size: 1rem; min-width: 1.2em; }
+
+  /* PROGRESS */
+  .progress-bar-wrap {
+    background: var(--surface); border-radius: 100px; height: 6px;
+    margin: 1rem 0; overflow: hidden;
+  }
+  .progress-bar { height: 100%; background: var(--accent); border-radius: 100px; transition: width 0.4s; }
+
+  /* RESULT */
+  .result-panel {
+    display: none; text-align: center; padding: 3rem 2rem;
+    background: var(--surface); border-radius: 16px; border: 1px solid var(--border);
+    margin-top: 2rem;
+  }
+  .result-panel.show { display: block; }
+  .result-emoji { font-size: 3rem; margin-bottom: 1rem; }
+  .result-title { font-family: var(--sans); font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; }
+  .result-time { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+  .result-score { font-size: 3rem; font-weight: 700; color: var(--accent); margin-bottom: 2rem; }
+
+  /* LEADERBOARD */
+  .lb-row {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 0.8rem 1rem; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface);
+    margin-bottom: 0.5rem;
+  }
+  .lb-rank { font-size: 0.8rem; color: var(--muted); width: 2em; text-align: right; }
+  .lb-rank.gold { color: var(--gold); font-weight: 700; }
+  .lb-rank.silver { color: #c0c0c0; font-weight: 700; }
+  .lb-rank.bronze { color: #cd7f32; font-weight: 700; }
+  .lb-name { flex: 1; font-weight: 700; font-size: 0.9rem; }
+  .lb-puzzle { font-size: 0.7rem; color: var(--muted); }
+  .lb-time { font-size: 0.8rem; color: var(--accent); }
+  .lb-score { font-size: 0.8rem; color: var(--gold); min-width: 60px; text-align: right; }
+
+  /* ── HOST SCREEN ── */
+  #host { display: none; }
+  #host.active { display: block; padding: 2rem; max-width: 900px; margin: 0 auto; }
+  .host-title { font-family: var(--sans); font-size: 1.8rem; font-weight: 800; margin-bottom: 0.3rem; }
+  .host-sub { color: var(--muted); font-size: 0.8rem; margin-bottom: 2rem; }
+  .host-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+  .host-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.5rem;
+  }
+  .host-card-title { font-size: 0.65rem; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 0.8rem; }
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.4rem 0.8rem; border-radius: 100px; font-size: 0.75rem;
+    margin-bottom: 1rem; font-weight: 700;
+  }
+  .status-open { background: rgba(74,222,128,0.15); color: var(--green); }
+  .status-locked { background: rgba(248,113,113,0.15); color: var(--red); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
+  .host-btn {
+    display: block; width: 100%; padding: 0.85rem; border-radius: 8px;
+    font-family: var(--mono); font-size: 0.8rem; font-weight: 700; cursor: pointer;
+    border: none; transition: all 0.2s; letter-spacing: 0.05em;
+  }
+  .host-btn-red { background: rgba(248,113,113,0.15); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+  .host-btn-red:hover { background: rgba(248,113,113,0.25); }
+  .host-btn-green { background: rgba(74,222,128,0.15); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
+  .host-btn-green:hover { background: rgba(74,222,128,0.25); }
+  .host-btn-purple { background: rgba(124,92,252,0.15); color: var(--accent); border: 1px solid rgba(124,92,252,0.3); margin-bottom: 0.5rem; }
+  .host-btn-purple:hover { background: rgba(124,92,252,0.25); }
+  .stat-number { font-family: var(--sans); font-size: 2.5rem; font-weight: 800; margin-bottom: 0.2rem; }
+  .stat-label { font-size: 0.75rem; color: var(--muted); }
+  .host-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.8rem; margin-bottom: 1rem; }
+  .stat-item { background: var(--surface2); border-radius: 8px; padding: 1rem; text-align: center; }
+  #pin-display {
+    font-size: 2rem; font-weight: 700; letter-spacing: 0.3em; color: var(--accent);
+    background: var(--surface2); border-radius: 8px; padding: 0.8rem;
+    text-align: center; margin-bottom: 1rem;
+  }
+  .share-link-box {
+    display: flex; gap: 0.5rem; margin-top: 0.5rem;
+  }
+  .share-link-input {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 0.5rem 0.75rem; color: var(--muted);
+    font-family: var(--mono); font-size: 0.7rem; outline: none;
+  }
+  .copy-btn {
+    background: var(--surface2); border: 1px solid var(--border2); color: var(--text);
+    padding: 0.5rem 0.75rem; border-radius: 6px; cursor: pointer;
+    font-family: var(--mono); font-size: 0.7rem; transition: all 0.2s; white-space: nowrap;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* JOIN SCREEN */
+  #join { display: none; }
+  #join.active {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 4rem 2rem; text-align: center;
+  }
+  .join-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 2.5rem; max-width: 420px; width: 100%;
+  }
+  .join-title { font-family: var(--sans); font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; }
+  .join-sub { color: var(--muted); font-size: 0.8rem; margin-bottom: 2rem; }
+  .join-input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 0.9rem 1rem; color: var(--text);
+    font-family: var(--mono); font-size: 1rem; outline: none; margin-bottom: 1rem;
+    transition: border-color 0.2s; text-align: center;
+  }
+  .join-input:focus { border-color: var(--accent); }
+  .join-error { color: var(--red); font-size: 0.8rem; margin-bottom: 1rem; display: none; }
+  .join-error.show { display: block; }
+
+  /* LEADERBOARD SCREEN */
+  #leaderboard { display: none; }
+  #leaderboard.active { display: block; padding: 2rem; max-width: 700px; margin: 0 auto; }
+  .lb-title { font-family: var(--sans); font-size: 1.8rem; font-weight: 800; margin-bottom: 0.3rem; }
+  .lb-empty { color: var(--muted); text-align: center; padding: 3rem; font-size: 0.85rem; }
+
+  .feedback { font-size: 0.85rem; margin-top: 0.5rem; min-height: 1.3em; }
+  .feedback.ok { color: var(--green); }
+  .feedback.err { color: var(--red); }
+
+  @media (max-width: 600px) {
+    .puzzle-cards { grid-template-columns: 1fr; }
+    .host-grid { grid-template-columns: 1fr; }
+    .host-stats { grid-template-columns: 1fr 1fr; }
+    nav { padding: 0.8rem 1rem; }
+    .nav-btn { padding: 0.35rem 0.6rem; font-size: 0.65rem; }
+  }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="app">
+
+<nav>
+  <div class="logo">PUZZLE<span>.</span>DAILY</div>
+  <div class="nav-links">
+    <button class="nav-btn active" onclick="showScreen('landing')">Home</button>
+    <button class="nav-btn" onclick="showScreen('join')">Join</button>
+    <button class="nav-btn" onclick="showScreen('leaderboard')">Board</button>
+    <button class="nav-btn" onclick="showScreen('host')">Host ⚙</button>
+  </div>
+</nav>
+
+<!-- ═══════ LANDING ═══════ -->
+<div id="landing" class="screen active">
+  <div class="hero-tag">DAILY CHALLENGE</div>
+  <h1 class="hero-title">Three puzzles.<br><em>One winner.</em></h1>
+  <p class="hero-sub">Each day brings three brand-new challenges. Pick your puzzle, race against the clock, and claim the top spot before time runs out.</p>
+
+  <div id="locked-banner" class="locked-banner">
+    🔒 This challenge has been locked by the host.<br>
+    No new players can join at this time.<br>
+    Check back tomorrow for the next round!
+  </div>
+
+  <div class="puzzle-cards">
+    <div class="puzzle-card p1" onclick="selectPuzzle(0)">
+      <div class="pnum">PUZZLE 01</div>
+      <div class="pname">Word Scramble</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:0.3rem">Unscramble the hidden word</div>
+      <div class="pdiff diff-easy">EASY</div>
+    </div>
+    <div class="puzzle-card p2" onclick="selectPuzzle(1)">
+      <div class="pnum">PUZZLE 02</div>
+      <div class="pname">Caesar Cipher</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:0.3rem">Decode the secret message</div>
+      <div class="pdiff diff-medium">MEDIUM</div>
+    </div>
+    <div class="puzzle-card p3" onclick="selectPuzzle(2)">
+      <div class="pnum">PUZZLE 03</div>
+      <div class="pname">Number Logic</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-top:0.3rem">Solve the equation chain</div>
+      <div class="pdiff diff-hard">HARD</div>
+    </div>
+  </div>
+  <div>
+    <button class="btn-primary" onclick="showScreen('join')">Enter Challenge →</button>
+    <button class="btn-secondary" onclick="showScreen('host')">Host Mode</button>
+  </div>
+</div>
+
+<!-- ═══════ JOIN ═══════ -->
+<div id="join" class="screen">
+  <div class="join-card">
+    <div class="join-title">Join the Challenge</div>
+    <div class="join-sub">Enter the session PIN from your host and your name to begin.</div>
+    <input class="join-input" id="join-name" placeholder="Your name" maxlength="20">
+    <input class="join-input" id="join-pin" placeholder="Session PIN (e.g. 4821)" maxlength="6" type="tel">
+    <div class="join-error" id="join-error">Invalid PIN or challenge is locked.</div>
+    <button class="btn-primary" style="width:100%" onclick="joinChallenge()">Join Now →</button>
+  </div>
+</div>
+
+<!-- ═══════ PUZZLE SCREEN ═══════ -->
+<div id="puzzle-screen" class="screen">
+  <div class="puzzle-header">
+    <div class="puzzle-meta">
+      <div class="ptype" id="puzzle-type-label">PUZZLE 01 · WORD SCRAMBLE</div>
+      <div class="ptitle" id="puzzle-title">Word Scramble</div>
+    </div>
+    <div class="timer-box">
+      <span class="timer-label">TIME</span>
+      <span class="timer-val" id="timer-display">00:00</span>
+    </div>
+  </div>
+  <div class="progress-bar-wrap" style="width:100%;max-width:700px">
+    <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+  </div>
+  <div class="puzzle-container" id="puzzle-container"></div>
+  <div class="result-panel" id="result-panel">
+    <div class="result-emoji" id="result-emoji">🎉</div>
+    <div class="result-title" id="result-title">Puzzle Solved!</div>
+    <div class="result-time" id="result-time">Completed in 1:23</div>
+    <div class="result-score" id="result-score">1,840 pts</div>
+    <button class="btn-primary" onclick="showScreen('leaderboard')">View Leaderboard →</button>
+  </div>
+</div>
+
+<!-- ═══════ LEADERBOARD ═══════ -->
+<div id="leaderboard" class="screen">
+  <div class="lb-title">Leaderboard</div>
+  <p style="color:var(--muted);font-size:0.8rem;margin-bottom:1.5rem">Today's top solvers</p>
+  <div id="lb-list"></div>
+</div>
+
+<!-- ═══════ HOST ═══════ -->
+<div id="host" class="screen">
+  <div class="host-title">Host Dashboard</div>
+  <div class="host-sub">Manage today's challenge session</div>
+
+  <div class="host-grid">
+    <!-- Status card -->
+    <div class="host-card">
+      <div class="host-card-title">SESSION STATUS</div>
+      <div id="status-badge" class="status-badge status-open"><span class="dot"></span> Open — Players can join</div>
+      <div id="pin-display">----</div>
+      <button class="host-btn host-btn-red" id="lock-btn" onclick="lockChallenge()">🔒 Lock Challenge</button>
+      <button class="host-btn host-btn-green" style="margin-top:0.5rem" id="unlock-btn" onclick="unlockChallenge()" style="display:none">🔓 Unlock Challenge</button>
+      <button class="host-btn host-btn-purple" style="margin-top:1rem" onclick="generateNewSession()">↺ New Session PIN</button>
+    </div>
+
+    <!-- Share card -->
+    <div class="host-card">
+      <div class="host-card-title">SHARE WITH PLAYERS</div>
+      <p style="color:var(--muted);font-size:0.8rem;margin-bottom:0.8rem">Share this PIN and link so players can join:</p>
+      <div class="share-link-box">
+        <input class="share-link-input" id="share-link" value="" readonly>
+        <button class="copy-btn" onclick="copyLink()">Copy</button>
+      </div>
+      <p style="font-size:0.7rem;color:var(--muted);margin-top:0.5rem">
+        PIN: <strong id="pin-text" style="color:var(--accent)">----</strong> — Players enter this on the Join page
+      </p>
+      <div style="margin-top:1.2rem">
+        <div class="host-card-title">TODAY'S PUZZLES</div>
+        <div style="font-size:0.8rem;line-height:2">
+          🟣 Puzzle 1: Word Scramble (Easy)<br>
+          🔴 Puzzle 2: Caesar Cipher (Medium)<br>
+          🟡 Puzzle 3: Number Logic (Hard)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="host-card" style="margin-bottom:1.5rem">
+    <div class="host-card-title">LIVE STATS</div>
+    <div class="host-stats">
+      <div class="stat-item">
+        <div class="stat-number" id="stat-players">0</div>
+        <div class="stat-label">Players Joined</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" id="stat-finished">0</div>
+        <div class="stat-label">Finished</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" id="stat-top">—</div>
+        <div class="stat-label">Top Score</div>
+      </div>
+    </div>
+    <button class="host-btn host-btn-purple" onclick="refreshStats()">↺ Refresh Stats</button>
+  </div>
+
+  <!-- Reset -->
+  <div class="host-card">
+    <div class="host-card-title">DANGER ZONE</div>
+    <p style="color:var(--muted);font-size:0.8rem;margin-bottom:1rem">Reset wipes all scores and entries for a fresh start.</p>
+    <button class="host-btn host-btn-red" onclick="resetAll()">⚠ Reset All Data</button>
+  </div>
+</div>
+
+</div><!-- end .app -->
+
+<script>
+// ═══════════════════════════════════════════
+// STATE (localStorage for persistence)
+// ═══════════════════════════════════════════
+const STATE_KEY = 'puzzle_daily_state';
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STATE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return {
+    pin: generatePin(),
+    locked: false,
+    entries: [],
+    today: todayStr()
+  };
+}
+
+function saveState(s) {
+  localStorage.setItem(STATE_KEY, JSON.stringify(s));
+}
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function generatePin() {
+  return String(Math.floor(1000 + Math.random() * 9000));
+}
+
+let STATE = loadState();
+// If it's a new day, reset entries but keep pin
+if (STATE.today !== todayStr()) {
+  STATE.today = todayStr();
+  STATE.entries = [];
+  STATE.locked = false;
+  saveState(STATE);
+}
+
+// Current session player
+let currentPlayer = null;
+let currentPuzzleIdx = null;
+
+// ═══════════════════════════════════════════
+// PUZZLES DATA
+// ═══════════════════════════════════════════
+const PUZZLES = [
+  {
+    id: 0,
+    type: 'scramble',
+    name: 'Word Scramble',
+    label: 'PUZZLE 01 · WORD SCRAMBLE',
+    word: 'CONSTELLATION',
+    hint: 'A group of stars forming a recognizable pattern in the night sky.',
+    points: 1000,
+    timeBonus: 5
+  },
+  {
+    id: 1,
+    type: 'cipher',
+    name: 'Caesar Cipher',
+    label: 'PUZZLE 02 · CAESAR CIPHER',
+    shift: 4,
+    message: 'PUZZLE MASTER',
+    hint1: { encoded: 'T', decoded: 'P' },
+    hint2: { encoded: 'E', decoded: 'A' },
+    points: 1500,
+    timeBonus: 8
+  },
+  {
+    id: 2,
+    type: 'logic',
+    name: 'Number Logic',
+    label: 'PUZZLE 03 · NUMBER LOGIC',
+    clues: [
+      { text: 'A + B = 14', answers: ['A','B'], validate: (v) => v.A + v.B === 14 },
+      { text: 'B × C = 24', answers: ['B','C'], validate: (v) => v.B * v.C === 24 },
+      { text: 'A - C = 2', answers: ['A','C'], validate: (v) => v.A - v.C === 2 }
+    ],
+    solution: { A: 8, B: 6, C: 4 },
+    points: 2000,
+    timeBonus: 10
+  }
+];
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const navBtns = {
+    landing: 0, join: 1, leaderboard: 2, host: 3, 'puzzle-screen': -1
+  };
+  const idx = navBtns[id];
+  if (idx >= 0) document.querySelectorAll('.nav-btn')[idx].classList.add('active');
+
+  if (id === 'landing') updateLandingLock();
+  if (id === 'leaderboard') renderLeaderboard();
+  if (id === 'host') updateHostPanel();
+}
+
+// ═══════════════════════════════════════════
+// LANDING
+// ═══════════════════════════════════════════
+function updateLandingLock() {
+  const banner = document.getElementById('locked-banner');
+  if (STATE.locked) {
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+}
+
+// ═══════════════════════════════════════════
+// JOIN
+// ═══════════════════════════════════════════
+function joinChallenge() {
+  const name = document.getElementById('join-name').value.trim();
+  const pin = document.getElementById('join-pin').value.trim();
+  const err = document.getElementById('join-error');
+  err.classList.remove('show');
+
+  if (!name) { err.textContent = 'Please enter your name.'; err.classList.add('show'); return; }
+  if (!pin) { err.textContent = 'Please enter the session PIN.'; err.classList.add('show'); return; }
+
+  if (STATE.locked) {
+    err.textContent = '🔒 This challenge is locked. No new players can join.';
+    err.classList.add('show');
+    return;
+  }
+
+  if (pin !== STATE.pin) {
+    err.textContent = 'Invalid PIN. Ask your host for the correct code.';
+    err.classList.add('show');
+    return;
+  }
+
+  // Check if already played
+  const already = STATE.entries.find(e => e.name.toLowerCase() === name.toLowerCase());
+  if (already) {
+    err.textContent = 'You\'ve already submitted an entry today! Check the leaderboard.';
+    err.classList.add('show');
+    return;
+  }
+
+  currentPlayer = name;
+  showScreen('landing');
+  // Show puzzle select
+  setTimeout(() => alert(`Welcome, ${name}! 👋\n\nClick a puzzle card to start your challenge. Your timer begins when the puzzle loads. Good luck!`), 100);
+}
+
+// ═══════════════════════════════════════════
+// PUZZLE SELECT
+// ═══════════════════════════════════════════
+function selectPuzzle(idx) {
+  if (!currentPlayer) {
+    showScreen('join');
+    return;
+  }
+  if (STATE.locked) {
+    alert('🔒 The host has locked this challenge. You cannot start a new puzzle.');
+    return;
+  }
+  currentPuzzleIdx = idx;
+  loadPuzzle(idx);
+  showScreen('puzzle-screen');
+}
+
+// ═══════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════
+let timerInterval = null;
+let elapsedSeconds = 0;
+
+function startTimer() {
+  elapsedSeconds = 0;
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    elapsedSeconds++;
+    document.getElementById('timer-display').textContent = formatTime(elapsedSeconds);
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+}
+
+function formatTime(s) {
+  const m = Math.floor(s / 60).toString().padStart(2, '0');
+  const sec = (s % 60).toString().padStart(2, '0');
+  return `${m}:${sec}`;
+}
+
+// ═══════════════════════════════════════════
+// LOAD PUZZLE
+// ═══════════════════════════════════════════
+function loadPuzzle(idx) {
+  const p = PUZZLES[idx];
+  document.getElementById('puzzle-type-label').textContent = p.label;
+  document.getElementById('puzzle-title').textContent = p.name;
+  document.getElementById('result-panel').classList.remove('show');
+  document.getElementById('progress-bar').style.width = '0%';
+
+  const container = document.getElementById('puzzle-container');
+  if (p.type === 'scramble') buildScramble(p, container);
+  else if (p.type === 'cipher') buildCipher(p, container);
+  else if (p.type === 'logic') buildLogic(p, container);
+
+  startTimer();
+}
+
+// ═══════════════════════════════════════════
+// PUZZLE 1: WORD SCRAMBLE
+// ═══════════════════════════════════════════
+function buildScramble(p, container) {
+  const scrambled = p.word.split('').sort(() => Math.random() - 0.5).join('');
+  container.innerHTML = `
+    <div class="scramble-area">
+      <p style="color:var(--muted);font-size:0.8rem;margin-bottom:1rem">Unscramble the letters to find the hidden word:</p>
+      <div class="scrambled-word">${scrambled}</div>
+      <div class="hint-box">
+        <div class="hint-label">HINT</div>
+        <div class="hint-text">${p.hint}</div>
+      </div>
+      <div class="answer-row">
+        <input class="answer-input" id="scramble-input" placeholder="Type your answer here..." autocomplete="off"
+          onkeydown="if(event.key==='Enter') checkScramble('${p.word}',${p.points},${p.timeBonus})">
+        <button class="submit-btn" onclick="checkScramble('${p.word}',${p.points},${p.timeBonus})">Submit</button>
+      </div>
+      <div class="feedback" id="scramble-fb"></div>
+      <div style="margin-top:1.5rem;font-size:0.75rem;color:var(--muted)">
+        Letters: ${p.word.length} &nbsp;·&nbsp; Case doesn't matter
+      </div>
+    </div>`;
+}
+
+function checkScramble(answer, basePoints, timeBonus) {
+  const input = document.getElementById('scramble-input');
+  const fb = document.getElementById('scramble-fb');
+  const val = input.value.trim().toUpperCase();
+  if (!val) return;
+
+  if (val === answer) {
+    input.classList.add('correct');
+    fb.className = 'feedback ok';
+    fb.textContent = '✓ Correct!';
+    document.getElementById('progress-bar').style.width = '100%';
+    finishPuzzle(basePoints, timeBonus, true);
+  } else {
+    input.classList.add('wrong');
+    fb.className = 'feedback err';
+    fb.textContent = `✗ Not quite — that's ${val.length} letters, keep trying!`;
+    setTimeout(() => input.classList.remove('wrong'), 400);
+  }
+}
+
+// ═══════════════════════════════════════════
+// PUZZLE 2: CAESAR CIPHER
+// ═══════════════════════════════════════════
+function buildCipher(p, container) {
+  const encode = (str, shift) =>
+    str.split('').map(c => {
+      if (c === ' ') return ' ';
+      return String.fromCharCode(((c.charCodeAt(0) - 65 + shift) % 26) + 65);
+    }).join('');
+
+  const encoded = encode(p.message, p.shift);
+  const words = encoded.split(' ');
+
+  let cellsHTML = '';
+  for (const w of words) {
+    for (const ch of w) {
+      cellsHTML += `<div class="cipher-cell">
+        <div class="cipher-encoded">${ch}</div>
+        <div class="cipher-decoded" id="dec-${ch}">_</div>
+      </div>`;
+    }
+    cellsHTML += `<div class="cipher-cell" style="background:transparent;border:none"></div>`;
+  }
+
+  container.innerHTML = `
+    <p style="color:var(--muted);font-size:0.8rem;margin-bottom:1rem">Each letter has been shifted by the same amount. Decode the message:</p>
+    <div class="cipher-grid">${cellsHTML}</div>
+    <div class="hint-box" style="margin:0.5rem 0">
+      <div class="hint-label">CLUES (given)</div>
+      <div class="cipher-key-row">
+        <div class="key-hint"><em>${p.hint1.encoded}</em> → ${p.hint1.decoded}</div>
+        <div class="key-hint"><em>${p.hint2.encoded}</em> → ${p.hint2.decoded}</div>
+      </div>
+    </div>
+    <p style="font-size:0.75rem;color:var(--muted);margin:0.5rem 0">What is the decoded message?</p>
+    <div class="answer-row">
+      <input class="answer-input" id="cipher-input" placeholder="Decoded message..." autocomplete="off"
+        oninput="updateCipherPreview(this.value, '${encoded}')"
+        onkeydown="if(event.key==='Enter') checkCipher('${p.message}',${p.points},${p.timeBonus})">
+      <button class="submit-btn" onclick="checkCipher('${p.message}',${p.points},${p.timeBonus})">Submit</button>
+    </div>
+    <div class="feedback" id="cipher-fb"></div>`;
+}
+
+function updateCipherPreview(val, encoded) {
+  const guess = val.toUpperCase().replace(/[^A-Z ]/g, '');
+  // Try to figure out shift from first letter
+  if (guess.length > 0 && encoded.length > 0) {
+    const guessChar = guess.charCodeAt(0) - 65;
+    const encChar = encoded.charCodeAt(0) - 65;
+    const shift = (encChar - guessChar + 26) % 26;
+    // Decode all
+    const decoded = (ch) => {
+      if (ch === ' ') return ' ';
+      return String.fromCharCode(((ch.charCodeAt(0) - 65 - shift + 26) % 26) + 65);
+    };
+    for (const ch of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') {
+      const el = document.getElementById('dec-' + ch);
+      if (el) el.textContent = decoded(ch);
+    }
+  }
+  const pct = Math.min(100, Math.round(val.length / 15 * 100));
+  document.getElementById('progress-bar').style.width = pct + '%';
+}
+
+function checkCipher(answer, basePoints, timeBonus) {
+  const input = document.getElementById('cipher-input');
+  const fb = document.getElementById('cipher-fb');
+  const val = input.value.trim().toUpperCase();
+  if (!val) return;
+
+  if (val === answer) {
+    input.classList.add('correct');
+    fb.className = 'feedback ok';
+    fb.textContent = '✓ Correct! Message decoded!';
+    document.getElementById('progress-bar').style.width = '100%';
+    finishPuzzle(basePoints, timeBonus, true);
+  } else {
+    input.classList.add('wrong');
+    fb.className = 'feedback err';
+    fb.textContent = `✗ Not right. Keep decoding!`;
+    setTimeout(() => input.classList.remove('wrong'), 400);
+  }
+}
+
+// ═══════════════════════════════════════════
+// PUZZLE 3: NUMBER LOGIC
+// ═══════════════════════════════════════════
+function buildLogic(p, container) {
+  const sol = p.solution;
+  let rows = '';
+  for (const [i, c] of p.clues.entries()) {
+    let displayText = c.text;
+    for (const v of c.answers) {
+      displayText = displayText.replace(new RegExp(v, 'g'), `<span class="var">${v}</span>`);
+    }
+    rows += `<div class="equation-item">
+      <div class="eq-text">${displayText}</div>
+      <span class="eq-check" id="ck-${i}"></span>
+    </div>`;
+  }
+
+  container.innerHTML = `
+    <p style="color:var(--muted);font-size:0.8rem;margin-bottom:1rem">Find the values of A, B, and C that satisfy all three equations simultaneously:</p>
+    <div class="equation-list">${rows}</div>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;margin:1.5rem 0">
+      ${Object.keys(sol).map(k => `
+        <div>
+          <label style="font-size:0.75rem;color:var(--muted);display:block;margin-bottom:4px">${k} =</label>
+          <input class="eq-input" id="val-${k}" type="number" placeholder="?" oninput="checkLogicProgress()">
+        </div>`).join('')}
+    </div>
+    <div class="feedback" id="logic-fb"></div>
+    <button class="submit-btn" style="margin-top:0.5rem" onclick="checkLogic(${JSON.stringify(sol)},${p.points},${p.timeBonus})">Submit Answers</button>`;
+}
+
+function checkLogicProgress() {
+  const sol = PUZZLES[2].solution;
+  const filled = Object.keys(sol).filter(k => {
+    const el = document.getElementById('val-' + k);
+    return el && el.value !== '';
+  }).length;
+  document.getElementById('progress-bar').style.width = Math.round(filled / Object.keys(sol).length * 80) + '%';
+}
+
+function checkLogic(sol, basePoints, timeBonus) {
+  const vals = {};
+  for (const k of Object.keys(sol)) {
+    const el = document.getElementById('val-' + k);
+    vals[k] = parseInt(el?.value);
+  }
+
+  let allCorrect = true;
+  const clues = PUZZLES[2].clues;
+  for (const [i, c] of clues.entries()) {
+    const ok = c.validate(vals);
+    document.getElementById('ck-' + i).textContent = ok ? '✓' : '✗';
+    document.getElementById('ck-' + i).style.color = ok ? 'var(--green)' : 'var(--red)';
+    if (!ok) allCorrect = false;
+  }
+
+  const fb = document.getElementById('logic-fb');
+  if (allCorrect) {
+    fb.className = 'feedback ok';
+    fb.textContent = '✓ All equations check out!';
+    document.getElementById('progress-bar').style.width = '100%';
+    for (const k of Object.keys(sol)) {
+      document.getElementById('val-' + k).classList.add('correct');
+    }
+    finishPuzzle(basePoints, timeBonus, true);
+  } else {
+    fb.className = 'feedback err';
+    fb.textContent = '✗ Some equations don\'t work. Check the red ones.';
+    for (const [i, c] of clues.entries()) {
+      const ok = c.validate(vals);
+      const inputs = Object.keys(sol).filter(k => c.answers.includes(k));
+      for (const k of inputs) {
+        const el = document.getElementById('val-' + k);
+        if (!ok) { el.classList.add('wrong'); setTimeout(() => el.classList.remove('wrong'), 400); }
+      }
+    }
+  }
+}
+
+// ═══════════════════════════════════════════
+// FINISH PUZZLE
+// ═══════════════════════════════════════════
+function finishPuzzle(basePoints, timeBonus, success) {
+  stopTimer();
+  if (!success) return;
+
+  const timeScore = Math.max(0, timeBonus * 60 - elapsedSeconds) * 10;
+  const totalScore = basePoints + timeScore;
+
+  // Save entry
+  const entry = {
+    name: currentPlayer,
+    puzzleIdx: currentPuzzleIdx,
+    puzzleName: PUZZLES[currentPuzzleIdx].name,
+    time: elapsedSeconds,
+    score: totalScore,
+    ts: Date.now()
+  };
+  STATE.entries.push(entry);
+  saveState(STATE);
+
+  // Show result
+  const panel = document.getElementById('result-panel');
+  document.getElementById('result-emoji').textContent = totalScore > 2000 ? '🏆' : totalScore > 1200 ? '🥈' : '🎯';
+  document.getElementById('result-title').textContent = 'Puzzle Solved!';
+  document.getElementById('result-time').textContent = `Completed in ${formatTime(elapsedSeconds)} · Time bonus: ${timeScore > 0 ? '+' + timeScore : '0'} pts`;
+  document.getElementById('result-score').textContent = totalScore.toLocaleString() + ' pts';
+  panel.classList.add('show');
+
+  panel.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ═══════════════════════════════════════════
+// LEADERBOARD
+// ═══════════════════════════════════════════
+function renderLeaderboard() {
+  const list = document.getElementById('lb-list');
+  if (!STATE.entries.length) {
+    list.innerHTML = '<div class="lb-empty">No entries yet. Be the first to complete a puzzle!</div>';
+    return;
+  }
+  const sorted = [...STATE.entries].sort((a, b) => b.score - a.score);
+  const rankClass = (i) => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+  const rankIcon = (i) => i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+
+  list.innerHTML = sorted.map((e, i) => `
+    <div class="lb-row">
+      <div class="lb-rank ${rankClass(i)}">${rankIcon(i)}</div>
+      <div>
+        <div class="lb-name">${e.name}</div>
+        <div class="lb-puzzle">${e.puzzleName}</div>
+      </div>
+      <div class="lb-time">${formatTime(e.time)}</div>
+      <div class="lb-score">${e.score.toLocaleString()} pts</div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════
+// HOST PANEL
+// ═══════════════════════════════════════════
+function updateHostPanel() {
+  const badge = document.getElementById('status-badge');
+  const lockBtn = document.getElementById('lock-btn');
+  const unlockBtn = document.getElementById('unlock-btn');
+
+  if (STATE.locked) {
+    badge.className = 'status-badge status-locked';
+    badge.innerHTML = '<span class="dot"></span> Locked — No new joins';
+    lockBtn.style.display = 'none';
+    unlockBtn.style.display = 'block';
+  } else {
+    badge.className = 'status-badge status-open';
+    badge.innerHTML = '<span class="dot"></span> Open — Players can join';
+    lockBtn.style.display = 'block';
+    unlockBtn.style.display = 'none';
+  }
+
+  document.getElementById('pin-display').textContent = STATE.pin;
+  document.getElementById('pin-text').textContent = STATE.pin;
+  document.getElementById('share-link').value = `${location.href.split('?')[0]}?pin=${STATE.pin}`;
+
+  refreshStats();
+}
+
+function refreshStats() {
+  document.getElementById('stat-players').textContent = [...new Set(STATE.entries.map(e => e.name))].length;
+  document.getElementById('stat-finished').textContent = STATE.entries.length;
+  const top = STATE.entries.length ? Math.max(...STATE.entries.map(e => e.score)) : 0;
+  document.getElementById('stat-top').textContent = top > 0 ? top.toLocaleString() : '—';
+}
+
+function lockChallenge() {
+  if (!confirm('Lock the challenge? No new players will be able to join.')) return;
+  STATE.locked = true;
+  saveState(STATE);
+  updateHostPanel();
+}
+
+function unlockChallenge() {
+  STATE.locked = false;
+  saveState(STATE);
+  updateHostPanel();
+}
+
+function generateNewSession() {
+  if (!confirm('Generate a new PIN? The old PIN will stop working.')) return;
+  STATE.pin = generatePin();
+  saveState(STATE);
+  updateHostPanel();
+}
+
+function resetAll() {
+  if (!confirm('⚠ Reset all data? This clears all scores, entries, and generates a new session. This cannot be undone.')) return;
+  STATE = { pin: generatePin(), locked: false, entries: [], today: todayStr() };
+  saveState(STATE);
+  updateHostPanel();
+  alert('Reset complete. A new session has been started.');
+}
+
+function copyLink() {
+  const input = document.getElementById('share-link');
+  navigator.clipboard.writeText(input.value).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  }).catch(() => {
+    input.select();
+    document.execCommand('copy');
+  });
+}
+
+// ═══════════════════════════════════════════
+// URL PIN AUTO-FILL
+// ═══════════════════════════════════════════
+(function() {
+  const params = new URLSearchParams(location.search);
+  const pin = params.get('pin');
+  if (pin) {
+    document.getElementById('join-pin').value = pin;
+    showScreen('join');
+  }
+})();
+</script>
+</body>
+</html>
