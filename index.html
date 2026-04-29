@@ -420,6 +420,7 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:.875re
 // ═══════════════════════════════════
 const SK = 'pdaily_v3';
 function today(){ return new Date().toISOString().slice(0,10); }
+function rpin(){ return String(Math.floor(1000+Math.random()*9000)); }
 function clearOldData(){
   if(!confirm('Clear all saved data and generate a fresh session? The host will need to share the new PIN.')) return;
   localStorage.removeItem(SK);
