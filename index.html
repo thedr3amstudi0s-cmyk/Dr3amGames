@@ -753,7 +753,7 @@ function playTone(freq,type,dur,vol=0.15,delay=0){
     o.connect(g);g.connect(a.destination);o.start(a.currentTime+delay);o.stop(a.currentTime+delay+dur);
   }catch(e){}
 }
-function sndCorrect(){playTone(523,.sine,.12,.2);playTone(659,.sine,.12,.2,.1);playTone(784,.sine,.18,.2,.2);}
+function sndCorrect(){playTone(523,'sine',.12,.2);playTone(659,'sine',.12,.2,.1);playTone(784,'sine',.18,.2,.2);}
 function sndWrong(){playTone(220,'sawtooth',.12,.12);playTone(180,'sawtooth',.1,.1,.08);}
 function sndTick(){playTone(880,'sine',.04,.04);}
 function sndWin(){
