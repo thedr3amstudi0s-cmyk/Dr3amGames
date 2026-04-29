@@ -304,6 +304,9 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:.875re
     <input class="field" id="join-pin" placeholder="Session PIN" maxlength="6" type="tel" autocomplete="off">
     <div class="err-msg" id="join-err">—</div>
     <button class="btn btn-primary btn-full" onclick="joinChallenge()">Let's Go →</button>
+    <p style="color:var(--muted);font-size:.7rem;margin-top:1.25rem;text-align:center;line-height:1.7">
+      Having trouble? <span style="color:var(--a);cursor:pointer;text-decoration:underline" onclick="clearOldData()">Clear saved data</span> and try again.
+    </p>
   </div>
 </div>
 
@@ -417,16 +420,31 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:.875re
 // ═══════════════════════════════════
 const SK = 'pdaily_v3';
 function today(){ return new Date().toISOString().slice(0,10); }
-function rpin(){ return String(Math.floor(1000+Math.random()*9000)); }
+function clearOldData(){
+  if(!confirm('Clear all saved data and generate a fresh session? The host will need to share the new PIN.')) return;
+  localStorage.removeItem(SK);
+  location.reload();
+}
 
 function loadState(){
-  try{ const r=localStorage.getItem(SK); if(r) return JSON.parse(r); }catch(e){}
-  return { pin:rpin(), locked:false, entries:[], today:today(), activePuzzle:0, hostPw:'puzzlehost' };
+  const defaults = { pin:rpin(), locked:false, entries:[], today:today(), activePuzzle:0, hostPw:'puzzlehost' };
+  try{
+    const r=localStorage.getItem(SK);
+    if(r){
+      const parsed = JSON.parse(r);
+      // Merge with defaults so missing keys always have a value
+      return Object.assign({}, defaults, parsed);
+    }
+  }catch(e){}
+  return defaults;
 }
 function save(){ localStorage.setItem(SK, JSON.stringify(S)); }
 
 let S = loadState();
+// Reset if new day
 if(S.today !== today()){ S.today=today(); S.entries=[]; S.locked=false; save(); }
+// Ensure activePuzzle is always a valid index
+if(typeof S.activePuzzle !== 'number' || S.activePuzzle < 0 || S.activePuzzle >= 16){ S.activePuzzle=0; save(); }
 
 let player = null;
 let hostAuthed = false;
@@ -624,15 +642,17 @@ function joinChallenge(){
   if(!name){ showErr('Please enter your name.'); return; }
   if(!pin){ showErr('Please enter the session PIN.'); return; }
   if(S.locked){ showErr('🔒 This challenge is locked. No new players can join.'); return; }
-  if(pin !== S.pin){ showErr('Incorrect PIN. Ask your host for the right code.'); return; }
+  if(pin.trim() !== String(S.pin).trim()){ showErr(`Incorrect PIN. The current PIN is set by your host. (Got: "${pin}")`); return; }
 
   const already = S.entries.find(e=>e.name.toLowerCase()===name.toLowerCase());
   if(already){ showErr("You've already completed a puzzle today! Check the leaderboard."); return; }
 
+  const puzzleIdx = (typeof S.activePuzzle === 'number' && S.activePuzzle >= 0) ? S.activePuzzle : 0;
+  const p = PUZZLES[puzzleIdx];
+  if(!p){ showErr('No puzzle is active yet. Ask your host to select one in the Host panel.'); return; }
+
   player = name;
-  const p = PUZZLES[S.activePuzzle];
-  if(!p){ showErr('No puzzle is active yet. Ask your host to set one.'); return; }
-  loadPuzzle(S.activePuzzle);
+  loadPuzzle(puzzleIdx);
   showScreen('puzzle-screen');
 }
 
