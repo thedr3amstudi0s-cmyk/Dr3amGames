@@ -421,6 +421,7 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:.875re
 const SK = 'pdaily_v3';
 function today(){ return new Date().toISOString().slice(0,10); }
 function rpin(){ return String(Math.floor(1000+Math.random()*9000)); }
+function cleanPin(p){ return String(p).replace(/[^0-9]/g,''); }
 function clearOldData(){
   if(!confirm('Clear all saved data and generate a fresh session? The host will need to share the new PIN.')) return;
   localStorage.removeItem(SK);
@@ -442,10 +443,13 @@ function loadState(){
 function save(){ localStorage.setItem(SK, JSON.stringify(S)); }
 
 let S = loadState();
+// Sanitize PIN — strip any stray quotes or non-numeric chars from old saves
+S.pin = cleanPin(S.pin);
 // Reset if new day
 if(S.today !== today()){ S.today=today(); S.entries=[]; S.locked=false; save(); }
 // Ensure activePuzzle is always a valid index
 if(typeof S.activePuzzle !== 'number' || S.activePuzzle < 0 || S.activePuzzle >= 16){ S.activePuzzle=0; save(); }
+save();
 
 let player = null;
 let hostAuthed = false;
@@ -643,7 +647,7 @@ function joinChallenge(){
   if(!name){ showErr('Please enter your name.'); return; }
   if(!pin){ showErr('Please enter the session PIN.'); return; }
   if(S.locked){ showErr('🔒 This challenge is locked. No new players can join.'); return; }
-  if(pin.trim() !== String(S.pin).trim()){ showErr(`Incorrect PIN. The current PIN is set by your host. (Got: "${pin}")`); return; }
+  if(cleanPin(pin) !== cleanPin(S.pin)){ showErr('Incorrect PIN — double check with your host. You entered: ' + cleanPin(pin)); return; }
 
   const already = S.entries.find(e=>e.name.toLowerCase()===name.toLowerCase());
   if(already){ showErr("You've already completed a puzzle today! Check the leaderboard."); return; }
@@ -1160,8 +1164,8 @@ function hostRefreshStats(){
 }
 function hostLock(){ if(!confirm('Lock the challenge? No new players can join.')) return; S.locked=true; save(); updateHost(); }
 function hostUnlock(){ S.locked=false; save(); updateHost(); }
-function hostNewPin(){ if(!confirm('Generate a new PIN?')) return; S.pin=rpin(); save(); updateHost(); }
-function hostReset(){ if(!confirm('⚠ Reset ALL data? This cannot be undone.')) return; S={...S, entries:[], locked:false, pin:rpin()}; save(); updateHost(); alert('Reset complete.'); }
+function hostNewPin(){ if(!confirm('Generate a new PIN?')) return; S.pin=cleanPin(rpin()); save(); updateHost(); }
+function hostReset(){ if(!confirm('⚠ Reset ALL data? This cannot be undone.')) return; S={...S, entries:[], locked:false, pin:cleanPin(rpin())}; save(); updateHost(); alert('Reset complete.'); }
 function hostCopyLink(){
   const inp=document.getElementById('h-share-link');
   navigator.clipboard.writeText(inp.value).then(()=>{ const b=document.querySelector('.copy-btn'); b.textContent='Copied!'; setTimeout(()=>b.textContent='Copy',2000); }).catch(()=>{ inp.select(); document.execCommand('copy'); });
