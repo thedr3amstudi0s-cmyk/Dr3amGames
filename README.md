@@ -46,17 +46,27 @@ Just open `streamer-economy-war/index.html` in a browser. No build step — it's
 3. Your game is live at `https://yourusername.github.io/your-repo/`.
 
 ### How people use it
-- **Admin tab**: enter the password from `ADMIN_PASSWORD` in `firebase-config.js`, set a streamer code (e.g. `NINJA2026`), start the game timer, trigger events, and run viewer polls.
+- **Admin tab**: enter the password from `ADMIN_PASSWORD` in `firebase-config.js`, set a streamer code (e.g. `NINJA2026`), start the game timer. Toggle **🔥 Auto Events: ON** to have random events/polls fire automatically every 1.5–4 minutes (tunable in `firebase-config.js` via `MIN_EVENT_SECONDS`/`MAX_EVENT_SECONDS`) for as long as that admin tab stays open. You can also fire any event or poll manually on demand.
 - **Join tab**: streamers enter the code + their name to create their player.
-- **Player tab**: buy businesses, collect income, invest, see net worth and the timer.
-- **Viewer Vote tab**: anyone watching can vote on the admin's live polls (one vote per browser, tracked via a local ID).
+- **Player tab**: a sticky HUD up top always shows your name, cash, the countdown timer, and your **net worth** (top right, large and gold so it's never hidden). Below that:
+  - **Buy businesses** and collect their income.
+  - **Invest** in crypto/stocks/bonds and cash out anytime.
+  - **Player Actions** — this is the "action-packed" layer:
+    - 🎲 **Risk It** — gamble any amount of your cash, 50/50 double-or-nothing.
+    - 🦹 **Sabotage** — attempt to steal cash from a random rival; if you get caught you pay a fine.
+    - 🧠 **Trivia Rush** — answer a quick question for a cash bonus.
+    - 🤝 **Send Cash** — gift money to a specific rival (form alliances, then betray them later for drama/clips).
+  - All actions have short cooldowns (shown live) so people can't spam them.
+- **Viewer Vote tab**: whenever an automatic or manual poll fires, anyone watching can vote (one vote per browser). A live ticker banner up top announces every event, win, steal, and poll result in real time across all tabs.
 - **Leaderboard**: live everywhere, sorted by net worth (cash + business value + investment value).
 
 ### Tuning the economy
 Edit `firebase-config.js`:
 - `STARTING_CASH`
 - `BUSINESSES` (cost / income per minute)
-- `INVESTMENTS` (just risk labels shown in the UI; value changes happen via admin event buttons or the bot)
+- `INVESTMENTS` (risk labels)
+- `ACTIONS` (cooldowns for Risk/Sabotage/Trivia/Gift), `STEAL_AMOUNT`, `STEAL_FAIL_FINE`, `STEAL_SUCCESS_CHANCE`, `TRIVIA_BONUS`, `TRIVIA_QUESTIONS`
+- `DIRECT_EVENTS` / `POLL_EVENTS` and `MIN_EVENT_SECONDS` / `MAX_EVENT_SECONDS` for the auto-event engine
 
 ---
 
