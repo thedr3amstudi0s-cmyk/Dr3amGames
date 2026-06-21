@@ -3,20 +3,22 @@
 // 2. Build > Realtime Database > Create Database (start in TEST mode for a quick stream event,
 //    or lock it down with rules later — see README.md)
 // 3. Project settings > General > Your apps > Web app (</>) > copy the config object below
+// Import the functions you need from the SDKs you need
+
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDQ4tYhsn9AJH9hLnGmCIx6JM27UE6t0vU",
+  authDomain: "ai-test-2d1aa.firebaseapp.com",
+  databaseURL: "https://ai-test-2d1aa-default-rtdb.firebaseio.com",
+  projectId: "ai-test-2d1aa",
+  storageBucket: "ai-test-2d1aa.firebasestorage.app",
+  messagingSenderId: "871362478836",
+  appId: "1:871362478836:web:f1e336fc53c306e6c794a1"
 };
 
 // Password admin types into the Admin tab to unlock controls.
 // This is NOT real security (anyone can view source) - fine for a casual stream event.
 // For real protection, use Firebase Auth + database rules (see README).
-const ADMIN_PASSWORD = "changeme123";
+const ADMIN_PASSWORD = "PoopyBum1243";
 
 // ====== GAME CONSTANTS ======
 const STARTING_CASH = 1000;
