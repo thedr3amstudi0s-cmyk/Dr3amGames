@@ -1,0 +1,15 @@
+{
+  "name": "streamer-economy-war-bot",
+  "version": "1.0.0",
+  "description": "Discord bot that posts random Economy War events, pins them, and collects one-vote-per-user text votes (1/2/3/4...). Optionally syncs results to the same Firebase Realtime Database used by the web game.",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5",
+    "node-fetch": "^2.7.0"
+  }
+}

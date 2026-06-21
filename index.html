@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Streamer Economy War</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#171a23; --panel2:#1f2330; --accent:#4ee1a0; --accent2:#ff5c7a;
+    --gold:#f4c95d; --text:#e9ecf3; --muted:#8b91a7; --blue:#5da9ff;
+    font-family:'Segoe UI',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(circle at top,#1a1f2e,#0b0d13 70%);color:var(--text);min-height:100vh}
+  header{padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #232838;position:sticky;top:0;background:rgba(15,17,23,.9);backdrop-filter:blur(6px);z-index:10}
+  header h1{font-size:1.3rem;margin:0;letter-spacing:.5px}
+  header h1 span{color:var(--accent)}
+  nav button{background:none;border:1px solid #2a3042;color:var(--muted);padding:8px 14px;border-radius:8px;margin-left:8px;cursor:pointer;font-weight:600}
+  nav button.active{background:var(--accent);color:#08110b;border-color:var(--accent)}
+  main{max-width:1100px;margin:0 auto;padding:24px}
+  .card{background:var(--panel);border:1px solid #232838;border-radius:14px;padding:20px;margin-bottom:18px}
+  .card h2{margin-top:0;font-size:1.05rem;color:var(--gold)}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  input,select{background:var(--panel2);border:1px solid #2a3042;color:var(--text);padding:10px 12px;border-radius:8px;font-size:.95rem}
+  button.btn{background:var(--accent);color:#08110b;border:none;padding:10px 16px;border-radius:8px;font-weight:700;cursor:pointer}
+  button.btn.alt{background:var(--blue)}
+  button.btn.danger{background:var(--accent2)}
+  button.btn:disabled{opacity:.4;cursor:not-allowed}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid #232838;font-size:.9rem}
+  th{color:var(--muted);font-weight:600}
+  .pill{display:inline-block;padding:3px 10px;border-radius:99px;background:#232838;font-size:.78rem;color:var(--muted)}
+  .biz-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+  .biz{background:var(--panel2);border:1px solid #2a3042;border-radius:12px;padding:14px}
+  .biz h3{margin:0 0 6px 0;font-size:1rem}
+  .biz .meta{color:var(--muted);font-size:.82rem;margin-bottom:10px}
+  .muted{color:var(--muted)}
+  .big{font-size:1.6rem;font-weight:800}
+  .gold{color:var(--gold)}
+  .green{color:var(--accent)}
+  .red{color:var(--accent2)}
+  .hidden{display:none !important}
+  .vote-opt{background:var(--panel2);border:1px solid #2a3042;border-radius:10px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+  .vote-opt button{cursor:pointer}
+  .bar{height:8px;background:#0e1119;border-radius:6px;overflow:hidden;margin-top:6px}
+  .bar i{display:block;height:100%;background:var(--accent)}
+  footer{text-align:center;color:var(--muted);font-size:.8rem;padding:30px}
+  #timer{font-weight:800;color:var(--gold)}
+  .leader-row.me{background:#1c2a22}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>💰 Streamer <span>Economy War</span></h1>
+  <nav>
+    <button id="navJoin" class="active">Join</button>
+    <button id="navPlayer">Player</button>
+    <button id="navVote">Viewer Vote</button>
+    <button id="navAdmin">Admin</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- CONFIG NOTICE -->
+  <div class="card" id="configWarning" style="border-color:var(--accent2)">
+    <h2 style="color:var(--accent2)">⚠️ Firebase not configured</h2>
+    <p class="muted">Edit <code>firebase-config.js</code> with your Firebase project keys before this works. See README.md.</p>
+  </div>
+
+  <!-- JOIN VIEW -->
+  <section id="view-join">
+    <div class="card">
+      <h2>Join as a Streamer</h2>
+      <p class="muted">Enter the streamer code given by the admin (or create one if the admin hasn't started yet).</p>
+      <div class="row">
+        <input id="joinCode" placeholder="Streamer code e.g. NINJA" maxlength="16">
+        <input id="joinName" placeholder="Display name">
+        <button class="btn" id="joinBtn">Join Game</button>
+      </div>
+      <p id="joinMsg" class="muted"></p>
+    </div>
+    <div class="card">
+      <h2>🏆 Live Leaderboard</h2>
+      <table>
+        <thead><tr><th>#</th><th>Streamer</th><th>Cash</th><th>Net Worth</th></tr></thead>
+        <tbody id="leaderboardBody"><tr><td colspan="4" class="muted">Waiting for players…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- PLAYER VIEW -->
+  <section id="view-player" class="hidden">
+    <div class="card">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div>
+          <div class="muted">Playing as</div>
+          <div class="big" id="pName">—</div>
+        </div>
+        <div style="text-align:right">
+          <div class="muted">Net Worth</div>
+          <div class="big gold" id="pNetWorth">$0</div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <span class="pill">Cash: <b id="pCash">$0</b></span>
+        <span class="pill">Time left: <b id="timer">--:--</b></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🏢 Businesses</h2>
+      <div class="biz-grid" id="bizGrid"></div>
+    </div>
+
+    <div class="card">
+      <h2>📈 Investments</h2>
+      <div class="biz-grid" id="investGrid"></div>
+    </div>
+
+    <div class="card">
+      <h2>🏆 Leaderboard</h2>
+      <table>
+        <thead><tr><th>#</th><th>Streamer</th><th>Cash</th><th>Net Worth</th></tr></thead>
+        <tbody id="leaderboardBody2"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- VIEWER VOTE VIEW -->
+  <section id="view-vote" class="hidden">
+    <div class="card">
+      <h2>🗳️ Current Event Vote</h2>
+      <div id="voteArea"><p class="muted">No active vote right now. Check back soon!</p></div>
+    </div>
+  </section>
+
+  <!-- ADMIN VIEW -->
+  <section id="view-admin" class="hidden">
+    <div class="card">
+      <h2>🔐 Admin Login</h2>
+      <div class="row">
+        <input id="adminPass" type="password" placeholder="Admin password">
+        <button class="btn" id="adminLoginBtn">Unlock</button>
+      </div>
+      <p class="muted">Default password is set in firebase-config.js (ADMIN_PASSWORD).</p>
+    </div>
+
+    <div id="adminPanel" class="hidden">
+      <div class="card">
+        <h2>Game Controls</h2>
+        <div class="row">
+          <input id="streamerCode" placeholder="Streamer code (e.g. NINJA)">
+          <button class="btn" id="setCodeBtn">Set/Reset Code</button>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <input id="durationMin" type="number" value="60" style="width:90px"> minutes
+          <button class="btn" id="startGameBtn">Start Game</button>
+          <button class="btn danger" id="endGameBtn">End Game</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Trigger Random Event</h2>
+        <div class="row">
+          <button class="btn alt" id="govGrant">💰 Government Grant (+$500 all)</button>
+          <button class="btn alt" id="crash">📉 Market Crash (-20% cash)</button>
+          <button class="btn alt" id="techBoom">🚀 Tech Boom (+30% investments)</button>
+          <button class="btn alt" id="taxAudit">🏦 Tax Audit (random player loses $)</button>
+          <button class="btn alt" id="mysteryBox">🎁 Mystery Box (random bonus)</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Start Viewer Poll</h2>
+        <div class="row">
+          <input id="pollQ" placeholder="Poll question" style="flex:1">
+        </div>
+        <div class="row" style="margin-top:8px">
+          <input id="pollOpt1" placeholder="Option 1">
+          <input id="pollOpt2" placeholder="Option 2">
+          <input id="pollOpt3" placeholder="Option 3 (optional)">
+          <input id="pollOpt4" placeholder="Option 4 (optional)">
+        </div>
+        <div class="row" style="margin-top:8px">
+          <input id="pollSeconds" type="number" value="60" style="width:90px"> seconds
+          <button class="btn" id="startPollBtn">Start Poll</button>
+          <button class="btn danger" id="closePollBtn">Close Poll Now</button>
+        </div>
+        <p class="muted" id="pollStatus"></p>
+      </div>
+
+      <div class="card">
+        <h2>Players</h2>
+        <table>
+          <thead><tr><th>Name</th><th>Cash</th><th>Net Worth</th><th>Actions</th></tr></thead>
+          <tbody id="adminPlayerBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>Streamer Economy War — host free on GitHub Pages + Firebase Realtime Database.</footer>
+
+<script src="firebase-config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
