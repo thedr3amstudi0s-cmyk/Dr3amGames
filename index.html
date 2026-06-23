@@ -3,282 +3,315 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Streamer Economy War</title>
+<title>💰 Streamer Economy War</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
-  :root{
-    --bg:#0a0014; --panel:#170a2b; --panel2:#21103d; --accent:#00ffc3; --accent2:#ff2d78;
-    --gold:#ffd23f; --text:#f1ecff; --muted:#a89fc9; --blue:#3fa9ff; --purple:#b06bff;
-    font-family:'Segoe UI',system-ui,sans-serif;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;color:var(--text);min-height:100vh;
-    background:
-      radial-gradient(circle at 15% 0%, #3a0a5a 0%, transparent 45%),
-      radial-gradient(circle at 85% 10%, #0a2d5a 0%, transparent 45%),
-      radial-gradient(circle at 50% 100%, #5a0a3a 0%, transparent 50%),
-      var(--bg);
-    background-attachment:fixed;
-  }
-  header{padding:16px 24px;display:flex;align-items:center;justify-content:space-between;
-    border-bottom:1px solid #3a2160;position:sticky;top:0;background:rgba(10,0,20,.85);backdrop-filter:blur(8px);z-index:20;flex-wrap:wrap;gap:10px}
-  header h1{font-size:1.3rem;margin:0;letter-spacing:.5px;text-shadow:0 0 12px rgba(0,255,195,.5)}
-  header h1 span{color:var(--accent)}
-  nav button{background:none;border:1px solid #3a2160;color:var(--muted);padding:8px 14px;border-radius:8px;margin-left:8px;cursor:pointer;font-weight:700;transition:.15s}
-  nav button.active{background:linear-gradient(135deg,var(--accent),#00b894);color:#04140f;border-color:transparent;box-shadow:0 0 16px rgba(0,255,195,.5)}
-  nav button:hover{border-color:var(--accent)}
-  main{max-width:1100px;margin:0 auto;padding:20px}
-
-  /* ticker */
-  #ticker{background:linear-gradient(90deg,#2a0a45,#0a1d45,#2a0a45);border-bottom:1px solid #3a2160;overflow:hidden;white-space:nowrap;position:sticky;top:65px;z-index:19}
-  #ticker .track{display:inline-block;padding:8px 0;animation:scroll 28s linear infinite}
-  #ticker span{padding:0 32px;font-weight:700;color:var(--gold)}
-  @keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-
-  .card{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid #3a2160;border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:0 4px 24px rgba(0,0,0,.35)}
-  .card h2{margin-top:0;font-size:1.05rem;color:var(--gold);text-shadow:0 0 8px rgba(255,210,63,.3)}
-  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-  input,select{background:#0e0620;border:1px solid #3a2160;color:var(--text);padding:10px 12px;border-radius:8px;font-size:.95rem}
-  button.btn{background:linear-gradient(135deg,var(--accent),#00b894);color:#04140f;border:none;padding:10px 16px;border-radius:9px;font-weight:800;cursor:pointer;transition:.15s;box-shadow:0 0 0 rgba(0,255,195,0)}
-  button.btn:hover{transform:translateY(-1px);box-shadow:0 4px 18px rgba(0,255,195,.4)}
-  button.btn.alt{background:linear-gradient(135deg,var(--blue),#1d5fd6)}
-  button.btn.alt:hover{box-shadow:0 4px 18px rgba(63,169,255,.4)}
-  button.btn.danger{background:linear-gradient(135deg,var(--accent2),#c2185b)}
-  button.btn.danger:hover{box-shadow:0 4px 18px rgba(255,45,120,.4)}
-  button.btn.purple{background:linear-gradient(135deg,var(--purple),#7a2ed6)}
-  button.btn.purple:hover{box-shadow:0 4px 18px rgba(176,107,255,.4)}
-  button.btn.gold{background:linear-gradient(135deg,var(--gold),#e0a300);color:#231900}
-  button.btn:disabled{opacity:.35;cursor:not-allowed;transform:none !important;box-shadow:none !important}
-  table{width:100%;border-collapse:collapse}
-  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid #3a2160;font-size:.9rem}
-  th{color:var(--muted);font-weight:700}
-  .pill{display:inline-block;padding:4px 12px;border-radius:99px;background:#0e0620;border:1px solid #3a2160;font-size:.8rem;color:var(--muted)}
-  .biz-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
-  .biz{background:#0e0620;border:1px solid #3a2160;border-radius:12px;padding:14px;transition:.15s}
-  .biz:hover{border-color:var(--accent)}
-  .biz h3{margin:0 0 6px 0;font-size:1rem}
-  .biz .meta{color:var(--muted);font-size:.82rem;margin-bottom:10px}
-  .muted{color:var(--muted)}
-  .gold{color:var(--gold)}
-  .green{color:var(--accent)}
-  .red{color:var(--accent2)}
-  .hidden{display:none !important}
-  .vote-opt{background:#0e0620;border:1px solid #3a2160;border-radius:10px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:12px}
-  .bar{height:8px;background:#1c0f33;border-radius:6px;overflow:hidden;margin-top:6px}
-  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--purple))}
-  footer{text-align:center;color:var(--muted);font-size:.8rem;padding:30px}
-  .leader-row.me{background:rgba(0,255,195,.08)}
-
-  /* sticky player HUD */
-  #playerHud{position:sticky;top:65px;z-index:15;display:flex;justify-content:space-between;align-items:center;
-    background:linear-gradient(135deg,#1a0a30,#0a1530);border:1px solid #3a2160;border-radius:16px;
-    padding:16px 22px;margin-bottom:18px;box-shadow:0 4px 30px rgba(0,0,0,.5);flex-wrap:wrap;gap:14px}
-  #playerHud .hud-left .hname{font-size:1.1rem;font-weight:800}
-  #playerHud .hud-left .muted{font-size:.78rem}
-  #playerHud .hud-right{text-align:right}
-  #playerHud .hud-right .nwlabel{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
-  #playerHud .hud-right .nwval{font-size:2rem;font-weight:900;color:var(--gold);text-shadow:0 0 14px rgba(255,210,63,.45);line-height:1.1}
-  #timer{font-weight:800;color:var(--accent2)}
-
-  .action-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
-  .action-card{background:#0e0620;border:1px solid #3a2160;border-radius:12px;padding:14px;text-align:center}
-  .action-card .icon{font-size:1.8rem}
-  .action-card p{font-size:.8rem;color:var(--muted);min-height:34px}
-  .cooldown{font-size:.75rem;color:var(--accent2)}
-
-  .flash{animation:flashbg 1.2s ease}
-  @keyframes flashbg{0%{box-shadow:0 0 0 0 rgba(0,255,195,.7)}100%{box-shadow:0 0 0 18px rgba(0,255,195,0)}}
-
-  #trivia-modal{position:fixed;inset:0;background:rgba(5,0,15,.8);display:flex;align-items:center;justify-content:center;z-index:50}
-  #trivia-modal .box{background:var(--panel);border:1px solid var(--purple);border-radius:16px;padding:26px;max-width:420px;width:90%;box-shadow:0 0 40px rgba(176,107,255,.4)}
-  #trivia-modal button{width:100%;text-align:left;margin-bottom:8px}
+:root{--bg:#06000f;--panel:#0f0520;--panel2:#160830;--border:#2a1550;
+  --accent:#00ffc3;--pink:#ff2d78;--gold:#ffd23f;--blue:#3fa9ff;--purple:#b06bff;
+  --text:#f0ebff;--muted:#9b8fc0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;
+  background-image:radial-gradient(ellipse at 10% 0%,#2a0050 0%,transparent 50%),
+  radial-gradient(ellipse at 90% 5%,#001850 0%,transparent 50%),
+  radial-gradient(ellipse at 50% 100%,#2a0030 0%,transparent 60%)}
+header{padding:14px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+  position:sticky;top:0;z-index:30;background:rgba(6,0,15,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+header h1{font-size:1.25rem;text-shadow:0 0 14px rgba(0,255,195,.4)}
+header h1 span{color:var(--accent)}
+nav button{background:transparent;border:1px solid var(--border);color:var(--muted);padding:8px 14px;
+  border-radius:8px;margin-left:6px;cursor:pointer;font-weight:700;font-size:.85rem;transition:.15s}
+nav button:hover{border-color:var(--accent);color:var(--accent)}
+nav button.active{background:var(--accent);color:#031a10;border-color:var(--accent);box-shadow:0 0 16px rgba(0,255,195,.4)}
+main{max-width:1080px;margin:0 auto;padding:20px}
+.hidden{display:none!important}
+.card{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--border);
+  border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 4px 28px rgba(0,0,0,.4)}
+.card h2{font-size:1rem;color:var(--gold);margin-bottom:14px;text-shadow:0 0 8px rgba(255,210,63,.3)}
+.warn-card{border-color:var(--pink)!important}.warn-card h2{color:var(--pink)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input,select{background:#08021a;border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-size:.9rem;outline:none}
+input:focus,select:focus{border-color:var(--accent)}
+.btn{background:linear-gradient(135deg,var(--accent),#00c896);color:#031a10;border:none;
+  padding:10px 16px;border-radius:9px;font-weight:800;cursor:pointer;transition:.15s;font-size:.88rem}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,255,195,.35)}
+.btn:disabled{opacity:.3;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+.btn.alt{background:linear-gradient(135deg,var(--blue),#1d66d6)}.btn.alt:hover{box-shadow:0 4px 16px rgba(63,169,255,.35)}
+.btn.danger{background:linear-gradient(135deg,var(--pink),#c2185b)}.btn.danger:hover{box-shadow:0 4px 16px rgba(255,45,120,.35)}
+.btn.purple{background:linear-gradient(135deg,var(--purple),#7a2ed6)}.btn.purple:hover{box-shadow:0 4px 16px rgba(176,107,255,.35)}
+.btn.gold{background:linear-gradient(135deg,var(--gold),#e0a300);color:#1a0e00}.btn.gold:hover{box-shadow:0 4px 16px rgba(255,210,63,.35)}
+.muted{color:var(--muted)}.gold{color:var(--gold)}.green{color:var(--accent)}.red{color:var(--pink)}
+.pill{display:inline-block;padding:4px 12px;border-radius:99px;background:#0c0424;border:1px solid var(--border);font-size:.8rem}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);font-size:.88rem}
+th{color:var(--muted);font-weight:700}
+tr.me-row td{background:rgba(0,255,195,.06)}
+#hud{position:sticky;top:62px;z-index:20;display:flex;justify-content:space-between;align-items:center;
+  background:linear-gradient(135deg,#12062a,#06101a);border:1px solid var(--border);border-radius:14px;
+  padding:14px 20px;margin-bottom:16px;box-shadow:0 4px 32px rgba(0,0,0,.6);flex-wrap:wrap;gap:12px}
+.hud-name{font-size:1.05rem;font-weight:800}
+.hud-nw-label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px}
+.hud-nw-val{font-size:2.1rem;font-weight:900;color:var(--gold);line-height:1;text-shadow:0 0 16px rgba(255,210,63,.4)}
+.action-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.action-card{background:#08021a;border:1px solid var(--border);border-radius:12px;padding:14px;
+  display:flex;flex-direction:column;gap:8px}
+.action-icon{font-size:1.6rem}.action-name{font-weight:800;font-size:.95rem}
+.action-desc{font-size:.78rem;color:var(--muted);flex:1}
+.cd-label{font-size:.75rem;color:var(--pink);min-height:16px;font-weight:700}
+.biz-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.biz-card{background:#08021a;border:1px solid var(--border);border-radius:12px;padding:14px}
+.biz-card h3{font-size:.95rem;margin-bottom:4px}
+.biz-meta{font-size:.78rem;color:var(--muted);margin-bottom:10px}
+.spark-wrap{margin:8px 0;background:#04010d;border-radius:6px;padding:2px}
+.spark-stat{display:flex;justify-content:space-between;font-size:.78rem;margin-top:4px}
+.duel-item{background:#08021a;border:1px solid var(--border);border-radius:10px;padding:12px;
+  margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+#gameOverBanner{text-align:center;border-color:var(--gold)!important;background:linear-gradient(135deg,#1e0f00,#2a1900)!important}
+.vote-option{background:#08021a;border:1px solid var(--border);border-radius:10px;
+  padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.vote-bar-wrap{flex:1}.vote-bar{height:6px;background:#0c0424;border-radius:4px;margin-top:5px;overflow:hidden}
+.vote-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--purple))}
+.modal-overlay{position:fixed;inset:0;background:rgba(4,0,12,.88);display:flex;
+  align-items:center;justify-content:center;z-index:50;backdrop-filter:blur(4px)}
+.modal-box{background:var(--panel);border:1px solid var(--purple);border-radius:16px;
+  padding:26px;max-width:440px;width:90%;box-shadow:0 0 50px rgba(176,107,255,.25)}
+.trivia-timer-bar{height:8px;background:#0c0424;border-radius:4px;overflow:hidden}
+#triviaTimerFill{height:100%;background:linear-gradient(90deg,var(--accent),var(--gold));transition:width .1s linear;border-radius:4px}
+.trivia-opts button{display:block;width:100%;text-align:left;margin-bottom:8px;padding:10px 14px;
+  background:#0c0424;border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-size:.9rem;transition:.15s}
+.trivia-opts button:hover:not(:disabled){border-color:var(--blue)}
+.trivia-opts button.correct{background:rgba(0,255,195,.15);border-color:var(--accent)!important;color:var(--accent);font-weight:700}
+.trivia-opts button.wrong{background:rgba(255,45,120,.1);border-color:var(--pink)!important;color:var(--pink)}
+.trivia-opts button:disabled{cursor:not-allowed}
+.slots-display{display:flex;align-items:center;justify-content:center;gap:10px;margin:16px 0}
+.reel{font-size:3.5rem;width:80px;height:80px;display:flex;align-items:center;justify-content:center;
+  background:#04010d;border:2px solid var(--border);border-radius:12px}
+.reel.spinning{border-color:var(--accent);box-shadow:0 0 16px rgba(0,255,195,.3)}
+.reel-div{font-size:1.5rem;color:var(--border);font-weight:900}
 </style>
 </head>
 <body>
-
 <header>
   <h1>💰 Streamer <span>Economy War</span></h1>
   <nav>
-    <button id="navJoin" class="active">Join</button>
-    <button id="navPlayer">Player</button>
-    <button id="navVote">Viewer Vote</button>
-    <button id="navAdmin">Admin</button>
+    <button id="navJoin" class="active">🏠 Join</button>
+    <button id="navPlayer">⚡ Play</button>
+    <button id="navVote">🗳️ Vote</button>
+    <button id="navAdmin">🔐 Admin</button>
   </nav>
 </header>
-
-<div id="ticker"><div class="track" id="tickerTrack"><span>🔥 Streamer Economy War is live — join with the streamer code from your host!</span></div></div>
-
 <main>
 
-  <div class="card" id="configWarning" style="border-color:var(--accent2)">
-    <h2 style="color:var(--accent2)">⚠️ Firebase not configured</h2>
-    <p class="muted">Edit <code>firebase-config.js</code> with your Firebase project keys before this works. See README.md.</p>
+<div id="configWarning" class="card warn-card">
+  <h2>⚠️ Firebase not configured</h2>
+  <p class="muted">Edit <code>firebase-config.js</code> and reload. Check browser console (F12) for the specific error.</p>
+</div>
+
+<!-- JOIN -->
+<section id="view-join">
+  <div class="card">
+    <h2>🎮 Join the Game</h2>
+    <p class="muted" style="margin-bottom:12px">Get a streamer code from your host, pick a name, start earning.</p>
+    <div class="row">
+      <input id="joinCode" placeholder="Streamer code" maxlength="16">
+      <input id="joinName" placeholder="Your display name" maxlength="20">
+      <button class="btn" id="joinBtn">Join →</button>
+    </div>
+    <p id="joinMsg" class="muted" style="margin-top:10px"></p>
+  </div>
+  <div class="card">
+    <h2>🏆 Leaderboard</h2>
+    <table><thead><tr><th>#</th><th>Name</th><th>Cash</th><th>Net Worth</th></tr></thead>
+    <tbody id="lb1"><tr><td colspan="4" class="muted">Waiting for players…</td></tr></tbody></table>
+  </div>
+</section>
+
+<!-- PLAYER -->
+<section id="view-player" class="hidden">
+  <div id="hud">
+    <div>
+      <div class="hud-name" id="hudName">—</div>
+      <div class="row" style="gap:8px;margin-top:5px">
+        <span class="pill">💵 <b id="hudCash">$0</b></span>
+        <span class="pill">⏱ <b id="hudTimer">--:--</b></span>
+      </div>
+    </div>
+    <div><div class="hud-nw-label">NET WORTH</div><div class="hud-nw-val" id="hudNW">$0</div></div>
   </div>
 
-  <!-- JOIN VIEW -->
-  <section id="view-join">
+  <div id="gameOverBanner" class="card hidden">
+    <div style="font-size:2rem;margin-bottom:6px">🏁</div>
+    <h2 style="color:var(--gold);font-size:1.4rem;margin-bottom:4px">GAME OVER!</h2>
+    <p class="muted">All actions locked. Check the leaderboard!</p>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="card">
+    <h2>⚡ Actions</h2>
+    <div class="action-grid">
+      <div class="action-card">
+        <div class="action-icon">🎲</div>
+        <div class="action-name">Risk It</div>
+        <div class="action-desc">Double or nothing — 50/50 on any amount you choose.</div>
+        <input id="riskAmt" type="number" placeholder="Bet amount" style="width:100%">
+        <button class="btn purple" id="riskBtn">Double or Nothing</button>
+        <div class="cd-label" id="riskCd"></div>
+      </div>
+      <div class="action-card">
+        <div class="action-icon">🦹</div>
+        <div class="action-name">Sabotage</div>
+        <div class="action-desc" id="sabDesc">Steal from a rival. 50% — caught means a fine.</div>
+        <button class="btn danger" id="stealBtn">Attempt Steal</button>
+        <div class="cd-label" id="stealCd"></div>
+      </div>
+      <div class="action-card">
+        <div class="action-icon">⚡</div>
+        <div class="action-name">Trivia Blitz</div>
+        <div class="action-desc">15 seconds. Faster answer = bigger bonus. Up to $600!</div>
+        <button class="btn gold" id="triviaBtn">Answer Now</button>
+        <div class="cd-label" id="triviaCd"></div>
+      </div>
+      <div class="action-card">
+        <div class="action-icon">🎰</div>
+        <div class="action-name">Slots — $200</div>
+        <div class="action-desc">Match 3 💎 = $3,000 jackpot. 2 matching = profit!</div>
+        <button class="btn alt" id="slotsBtn">Pull Lever</button>
+        <div class="cd-label" id="slotsCd"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1v1 ARENA -->
+  <div class="card">
+    <h2>🥊 1v1 Arena</h2>
+    <p class="muted" style="margin-bottom:12px">Challenge a rival — put money on it. Your bet is held until resolved.</p>
+    <div class="row" style="margin-bottom:16px">
+      <select id="duelTarget" style="flex:1;min-width:130px"></select>
+      <input id="duelAmt" type="number" placeholder="$ bet" style="width:100px">
+      <button class="btn purple" id="duelCoinBtn">🪙 Coin Flip</button>
+      <button class="btn danger" id="duelDiceBtn">🎲 Dice Roll</button>
+    </div>
+    <div style="font-size:.82rem;color:var(--muted);font-weight:700;margin-bottom:8px">📬 INCOMING CHALLENGES</div>
+    <div id="incomingDuels"><p class="muted">No challenges right now.</p></div>
+  </div>
+
+  <!-- SEND CASH -->
+  <div class="card">
+    <h2>🤝 Send Cash</h2>
+    <p class="muted" style="margin-bottom:12px">Form alliances. Betray them later. Make great stream moments.</p>
+    <div class="row">
+      <select id="giftTarget" style="flex:1;min-width:130px"></select>
+      <input id="giftAmt" type="number" placeholder="$ amount" style="width:100px">
+      <button class="btn alt" id="giftBtn">Send</button>
+    </div>
+  </div>
+
+  <!-- BUSINESSES -->
+  <div class="card">
+    <h2>🏢 Businesses <span class="muted" style="font-size:.78rem;font-weight:400">— tap Collect to grab your income</span></h2>
+    <div class="biz-grid" id="bizGrid"></div>
+  </div>
+
+  <!-- INVESTMENTS -->
+  <div class="card">
+    <h2>📈 Investments <span class="muted" style="font-size:.78rem;font-weight:400">— live prices, updates every 60s</span></h2>
+    <div class="biz-grid" id="investGrid"></div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div class="card">
+    <h2>🏆 Leaderboard</h2>
+    <table><thead><tr><th>#</th><th>Name</th><th>Cash</th><th>Net Worth</th></tr></thead>
+    <tbody id="lb2"></tbody></table>
+  </div>
+</section>
+
+<!-- VOTE -->
+<section id="view-vote" class="hidden">
+  <div class="card">
+    <h2>🗳️ Viewer Vote</h2>
+    <p class="muted" style="margin-bottom:14px">Random events fire automatically. Vote here to decide what happens to the players!</p>
+    <div id="voteArea"><p class="muted">No active vote right now. Check back — events fire every couple minutes!</p></div>
+  </div>
+</section>
+
+<!-- ADMIN -->
+<section id="view-admin" class="hidden">
+  <div class="card">
+    <h2>🔐 Admin Login</h2>
+    <div class="row">
+      <input id="adminPass" type="password" placeholder="Admin password">
+      <button class="btn" id="adminLoginBtn">Unlock</button>
+    </div>
+    <p class="muted" style="margin-top:8px">Set in firebase-config.js → ADMIN_PASSWORD</p>
+  </div>
+  <div id="adminPanel" class="hidden">
     <div class="card">
-      <h2>Join as a Streamer</h2>
-      <p class="muted">Enter the streamer code given by the admin.</p>
+      <h2>🎮 Game Controls</h2>
+      <div class="row" style="margin-bottom:10px">
+        <input id="aCode" placeholder="Streamer code (e.g. NINJA)">
+        <button class="btn" id="setCodeBtn">Set Code</button>
+      </div>
+      <div class="row" style="margin-bottom:10px">
+        <input id="aDuration" type="number" value="60" style="width:80px"> min
+        <button class="btn" id="startBtn">▶ Start Game</button>
+        <button class="btn danger" id="endBtn">⏹ End Game</button>
+      </div>
       <div class="row">
-        <input id="joinCode" placeholder="Streamer code e.g. NINJA" maxlength="16">
-        <input id="joinName" placeholder="Display name">
-        <button class="btn" id="joinBtn">Join Game</button>
+        <button class="btn purple" id="autoBtn">🔥 Auto Events: OFF</button>
+        <span class="muted" style="font-size:.8rem">While ON: events every ~2 min + market updates every 60s.</span>
       </div>
-      <p id="joinMsg" class="muted"></p>
     </div>
     <div class="card">
-      <h2>🏆 Live Leaderboard</h2>
-      <table>
-        <thead><tr><th>#</th><th>Streamer</th><th>Cash</th><th>Net Worth</th></tr></thead>
-        <tbody id="leaderboardBody"><tr><td colspan="4" class="muted">Waiting for players…</td></tr></tbody>
-      </table>
+      <h2>💥 Fire Event Now (no vote)</h2>
+      <div class="row" id="manualEventRow"></div>
     </div>
-  </section>
-
-  <!-- PLAYER VIEW -->
-  <section id="view-player" class="hidden">
-
-    <div id="playerHud">
-      <div class="hud-left">
-        <div class="hname" id="pName">—</div>
-        <div class="row" style="margin-top:6px">
-          <span class="pill">Cash: <b id="pCash">$0</b></span>
-          <span class="pill">⏱ <b id="timer">--:--</b></span>
-        </div>
-      </div>
-      <div class="hud-right">
-        <div class="nwlabel">Net Worth</div>
-        <div class="nwval" id="pNetWorth">$0</div>
-      </div>
-    </div>
-
     <div class="card">
-      <h2>⚡ Player Actions</h2>
-      <p class="muted">Do something! These are your tools to climb the leaderboard fast (and mess with rivals).</p>
-      <div class="action-grid">
-        <div class="action-card">
-          <div class="icon">🎲</div>
-          <h3>Risk It</h3>
-          <p>Gamble cash. Win = double it. Lose = it's gone.</p>
-          <input id="riskAmt" type="number" placeholder="$ amount" style="width:100%;margin-bottom:8px">
-          <button class="btn purple" id="riskBtn">Risk It</button>
-          <div class="cooldown" id="riskCd"></div>
-        </div>
-        <div class="action-card">
-          <div class="icon">🦹</div>
-          <h3>Sabotage</h3>
-          <p id="stealDesc">Try to steal cash from a random rival. 50/50 — get caught and pay a fine.</p>
-          <button class="btn danger" id="stealBtn">Attempt Steal</button>
-          <div class="cooldown" id="stealCd"></div>
-        </div>
-        <div class="action-card">
-          <div class="icon">🧠</div>
-          <h3>Trivia Rush</h3>
-          <p>Answer fast for a quick cash bonus.</p>
-          <button class="btn gold" id="triviaBtn">Answer Trivia</button>
-          <div class="cooldown" id="triviaCd"></div>
-        </div>
-        <div class="action-card">
-          <div class="icon">🤝</div>
-          <h3>Send Cash</h3>
-          <p>Gift or pay off a rival — form alliances, betray later.</p>
-          <select id="giftTarget" style="width:100%;margin-bottom:8px"></select>
-          <input id="giftAmt" type="number" placeholder="$ amount" style="width:100%;margin-bottom:8px">
-          <button class="btn alt" id="giftBtn">Send</button>
-        </div>
-      </div>
+      <h2>🗳️ Start Viewer Poll Now</h2>
+      <div class="row" id="manualPollRow"></div>
+      <p class="muted" id="pollStatus" style="margin-top:8px"></p>
     </div>
-
     <div class="card">
-      <h2>🏢 Businesses</h2>
-      <div class="biz-grid" id="bizGrid"></div>
+      <h2>👥 Players</h2>
+      <table><thead><tr><th>Name</th><th>Cash</th><th>Net Worth</th><th>Adjust</th></tr></thead>
+      <tbody id="adminPlayers"></tbody></table>
     </div>
-
-    <div class="card">
-      <h2>📈 Investments</h2>
-      <div class="biz-grid" id="investGrid"></div>
-    </div>
-
-    <div class="card">
-      <h2>🏆 Leaderboard</h2>
-      <table>
-        <thead><tr><th>#</th><th>Streamer</th><th>Cash</th><th>Net Worth</th></tr></thead>
-        <tbody id="leaderboardBody2"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- VIEWER VOTE VIEW -->
-  <section id="view-vote" class="hidden">
-    <div class="card">
-      <h2>🗳️ Live Event Vote</h2>
-      <p class="muted">Random events fire automatically throughout the game — vote here when one pops up!</p>
-      <div id="voteArea"><p class="muted">No active vote right now. Check back soon — events fire every couple minutes!</p></div>
-    </div>
-  </section>
-
-  <!-- ADMIN VIEW -->
-  <section id="view-admin" class="hidden">
-    <div class="card">
-      <h2>🔐 Admin Login</h2>
-      <div class="row">
-        <input id="adminPass" type="password" placeholder="Admin password">
-        <button class="btn" id="adminLoginBtn">Unlock</button>
-      </div>
-      <p class="muted">Default password is set in firebase-config.js (ADMIN_PASSWORD).</p>
-    </div>
-
-    <div id="adminPanel" class="hidden">
-      <div class="card">
-        <h2>Game Controls</h2>
-        <div class="row">
-          <input id="streamerCode" placeholder="Streamer code (e.g. NINJA)">
-          <button class="btn" id="setCodeBtn">Set/Reset Code</button>
-        </div>
-        <div class="row" style="margin-top:10px">
-          <input id="durationMin" type="number" value="60" style="width:90px"> minutes
-          <button class="btn" id="startGameBtn">Start Game</button>
-          <button class="btn danger" id="endGameBtn">End Game</button>
-        </div>
-        <div class="row" style="margin-top:10px">
-          <button class="btn purple" id="autoModeBtn">🔥 Auto Events: OFF</button>
-          <span class="muted">When ON (and this admin tab stays open), random events/polls fire automatically every 1.5–4 min.</span>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Manual Event (instant, bypasses voting)</h2>
-        <div class="row" id="manualEventBtns"></div>
-      </div>
-
-      <div class="card">
-        <h2>Force a Viewer Poll Now</h2>
-        <div class="row" id="manualPollBtns"></div>
-        <p class="muted" id="pollStatus"></p>
-      </div>
-
-      <div class="card">
-        <h2>Players</h2>
-        <table>
-          <thead><tr><th>Name</th><th>Cash</th><th>Net Worth</th><th>Actions</th></tr></thead>
-          <tbody id="adminPlayerBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
+  </div>
+</section>
 
 </main>
 
-<div id="trivia-modal" class="hidden">
-  <div class="box">
-    <h2 style="margin-top:0" id="triviaQ"></h2>
-    <div id="triviaOpts"></div>
+<!-- TRIVIA MODAL -->
+<div id="triviaModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div id="triviaCat" style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px"></div>
+    <div id="triviaQ" style="font-size:1.1rem;font-weight:700;margin-bottom:14px;line-height:1.4"></div>
+    <div class="trivia-timer-bar"><div id="triviaTimerFill" style="width:100%"></div></div>
+    <div style="display:flex;justify-content:space-between;margin:4px 0 14px">
+      <span class="muted" style="font-size:.75rem">Faster = bigger bonus</span>
+      <span id="triviaTimerLabel" style="font-size:.78rem;font-weight:700;color:var(--gold)">15s</span>
+    </div>
+    <div id="triviaOpts" class="trivia-opts"></div>
+    <div id="triviaResult" class="hidden" style="text-align:center;padding:12px;font-size:1rem;font-weight:800;border-radius:8px;margin-top:8px"></div>
   </div>
 </div>
 
-<footer>Streamer Economy War — host free on GitHub Pages + Firebase Realtime Database.</footer>
+<!-- SLOTS MODAL -->
+<div id="slotsModal" class="modal-overlay hidden">
+  <div class="modal-box" style="text-align:center">
+    <h2 style="margin-bottom:6px">🎰 Slot Machine</h2>
+    <p class="muted" style="font-size:.8rem;margin-bottom:20px">💎💎💎 = $3,000 jackpot &nbsp;|&nbsp; 💰💰💰 = $1,500 &nbsp;|&nbsp; 2 match = small win</p>
+    <div class="slots-display">
+      <div class="reel" id="reel0">❓</div>
+      <div class="reel-div">|</div>
+      <div class="reel" id="reel1">❓</div>
+      <div class="reel-div">|</div>
+      <div class="reel" id="reel2">❓</div>
+    </div>
+    <div id="slotsResult" style="min-height:32px;font-size:1.05rem;font-weight:800;margin:16px 0"></div>
+    <button class="btn" id="slotsClose">Close</button>
+  </div>
+</div>
 
 <script src="firebase-config.js"></script>
 <script src="app.js"></script>
